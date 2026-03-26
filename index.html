@@ -569,7 +569,7 @@
           CONFIG.GENRES.forEach(function(genre) {
             if (!defaults[genre]) return;
             var opts = state.optionsByGenre[genre] || [];
-            var matched = opts.find(function(o) { return o.label === defaults[genre].item; });
+            var matched = opts.find(function(o) { return o.label === defaults[genre].label; });
             if (matched) {
               var point = matched.point;
               if (genre === '企業種別') point += getTsrAddpoint(category, state.tsrValue);
@@ -602,7 +602,7 @@
           CONFIG.GENRES.forEach(function(genre) {
             if (!defaults[genre]) return;
             var opts = state.optionsByGenre[genre] || [];
-            var matched = opts.find(function(o) { return o.label === defaults[genre].item; });
+            var matched = opts.find(function(o) { return o.label === defaults[genre].label; });
             if (matched) {
               var point = matched.point;
               if (genre === '企業種別') point += getTsrAddpoint(state.selectedCategory, tsr);
