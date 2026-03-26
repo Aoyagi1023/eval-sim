@@ -226,114 +226,20 @@
   'use strict';
 
   var CONFIG = {
-    SUBDOMAIN: 'risk-research',
-    APP_ID: 317,
-    API_TOKEN: 'QZE08F8dv7jXgdSCibZoC1vvItP5olZwnzRput26',
-    FIELDS: {
-      CATEGORY: '大分類',
-      GENRE: '小分類',
-      ITEM: '項目',
-      POINT: '加点',
-      SORT: '表示順位',
-      ESTIMATE_USE: '見積使用',
-      DELETE: '削除'
-    },
     GENRES: ['企業種別', '業歴', '資本金', '被保険者数', '決算公告', '年商', '企業評価', '決算', '自己資本比率', 'リスクスコア', '倒産スコア'],
     TSR_OPTIONS: ['会社財務情報あり', '財務情報なし', '会社情報なし', '見積']
   };
 
-  var BASE_URL = 'https://' + CONFIG.SUBDOMAIN + '.cybozu.com/k/v1/records.json';
+  // 埋め込みマスタデータ（kintone API不要）
+  var MASTER_DATA = {"categories":["非上場","上場","会社以外","国および地方公共団体"],"options":{"非上場":{"決算公告":[{"label":"公告あり","point":0},{"label":"公告なし","point":0.5}],"被保険者数":[{"label":"1000人以上","point":0},{"label":"700～1000人未満","point":0.1},{"label":"500～700人未満","point":0.2},{"label":"300～500人未満","point":0.3},{"label":"100～300人未満","point":0.4},{"label":"50～100人未満","point":0.6},{"label":"20～50人未満","point":0.8},{"label":"5～20人未満","point":1},{"label":"5人未満","point":1.5},{"label":"不明・データ無し","point":1}],"リスクスコア":[{"label":"99～100","point":0},{"label":"96～98","point":0.1},{"label":"90～95","point":0.2},{"label":"76～89","point":0.3},{"label":"50～75","point":0.4},{"label":"21～49","point":0.6},{"label":"11～20","point":0.8},{"label":"5～10","point":1},{"label":"2～4","point":1.2},{"label":"1","point":1.4},{"label":"不明・データ無し","point":1.4}],"倒産スコア":[{"label":"A","point":0},{"label":"B","point":0.1},{"label":"C","point":0.2},{"label":"D","point":0.3},{"label":"E","point":0.5},{"label":"F","point":0.7},{"label":"Gデータ無し","point":0.9},{"label":"不明・データ無し","point":0.8}],"決算":[{"label":"黒字","point":0},{"label":"赤字（1期のみ）","point":0.5},{"label":"赤字（2期連続）","point":1},{"label":"赤字（3期連続以上）","point":1.5},{"label":"不明・データ無し","point":1}],"企業評価":[{"label":"85～100点","point":0},{"label":"65～79点","point":0.3},{"label":"50～64点","point":0.6},{"label":"30～49点","point":0.9},{"label":"29点以下(不明)","point":1.2},{"label":"不明・データ無し","point":0.9}],"年商":[{"label":"100億以上","point":0},{"label":"95億～100億未満","point":0.05},{"label":"90億～95億未満","point":0.1},{"label":"85億～90億未満","point":0.15},{"label":"80億～85億未満","point":0.2},{"label":"75億～80億未満","point":0.25},{"label":"60億～75億未満","point":0.3},{"label":"55億～60億未満","point":0.35},{"label":"50億～55億未満","point":0.4},{"label":"45億～50億未満","point":0.45},{"label":"40億～45億未満","point":0.5},{"label":"35億～40億未満","point":0.55},{"label":"30億～35億未満","point":0.6},{"label":"25億～30億未満","point":0.65},{"label":"20億～25億未満","point":0.7},{"label":"15億～20億未満","point":0.75},{"label":"10億～15億未満","point":0.8},{"label":"10億未満","point":0.85},{"label":"不明・データ無し","point":0.5}],"資本金":[{"label":"100億以上","point":0},{"label":"50億～100億未満","point":0.05},{"label":"30億～50億未満","point":0.1},{"label":"10億～30億未満","point":0.15},{"label":"5億～10億未満","point":0.2},{"label":"3億～5億未満","point":0.25},{"label":"1億～3億未満","point":0.3},{"label":"5000万～1億未満","point":0.35},{"label":"3000万～5000万未満","point":0.4},{"label":"1000万～3000万未満","point":0.45},{"label":"1000万未満","point":0.5}],"業歴":[{"label":"50年以上","point":0},{"label":"45年～50年未満","point":0.1},{"label":"40年～45年未満","point":0.2},{"label":"35年～40年未満","point":0.3},{"label":"30年～35年未満","point":0.4},{"label":"25年～30年未満","point":0.5},{"label":"20年～25年未満","point":0.6},{"label":"15年～20年未満","point":0.7},{"label":"10年～15年未満","point":0.8},{"label":"7年～10年未満","point":0.9},{"label":"3年～7年未満","point":1},{"label":"1年～3年未満","point":1.1},{"label":"1年未満","point":1.2}],"企業種別":[{"label":"非上場","point":5.5}],"自己資本比率":[{"label":"50％以上","point":0},{"label":"30～49％","point":0.2},{"label":"10～29％","point":0.4},{"label":"10％未満","point":0.6},{"label":"マイナス","point":0.8},{"label":"不明・データ無し","point":0.5}]},"上場":{"リスクスコア":[{"label":"99～100","point":0},{"label":"96～98","point":0.1},{"label":"90～95","point":0.2},{"label":"76～89","point":0.3},{"label":"50～75","point":0.4},{"label":"21～49","point":0.5},{"label":"11～20","point":0.6},{"label":"5～10","point":0.7},{"label":"2～4","point":0.8},{"label":"1","point":0.9}],"倒産スコア":[{"label":"A","point":0},{"label":"B","point":0.1},{"label":"C","point":0.2},{"label":"D","point":0.3},{"label":"E","point":0.4},{"label":"F","point":0.5}],"決算":[{"label":"黒字","point":0},{"label":"赤字（1期のみ）","point":0.5},{"label":"赤字（2期連続）","point":1},{"label":"赤字（3期連続以上）","point":1.5}],"企業評価":[{"label":"85～100点","point":0},{"label":"65～79点","point":0.3},{"label":"50～64点","point":0.6},{"label":"30～49点","point":0.9},{"label":"29点以下(不明)","point":1.2}],"年商":[{"label":"1000億以上","point":0},{"label":"700億～1000億未満","point":0.1},{"label":"600億～700億未満","point":0.2},{"label":"500億～600億未満","point":0.3},{"label":"400億～500億未満","point":0.4},{"label":"300億～400億未満","point":0.5},{"label":"200億～300億未満","point":0.6},{"label":"100億～200億未満","point":0.7},{"label":"90億～100億未満","point":0.8},{"label":"80億～90億未満","point":0.9},{"label":"70億～80億未満","point":1},{"label":"60億～70億未満","point":1.1},{"label":"50億～60億未満","point":1.2},{"label":"40億～50億未満","point":1.3},{"label":"30億～40億未満","point":1.4},{"label":"20億～30億未満","point":1.5},{"label":"10億～20億未満","point":1.6},{"label":"10億未満","point":1.7}],"資本金":[{"label":"100億以上","point":0},{"label":"50億～100億未満","point":0.1},{"label":"30億～50億未満","point":0.2},{"label":"10億～30億未満","point":0.3},{"label":"5億～10億未満","point":0.4},{"label":"3億～5億未満","point":0.5},{"label":"1億～3億未満","point":0.6},{"label":"5000万～1億未満","point":0.7},{"label":"3000万～5000万未満","point":0.8},{"label":"1000万～3000万未満","point":0.9},{"label":"1000万未満","point":1}],"業歴":[{"label":"50年以上","point":0},{"label":"45年～50年未満","point":0.1},{"label":"40年～45年未満","point":0.2},{"label":"35年～40年未満","point":0.3},{"label":"30年～35年未満","point":0.4},{"label":"25年～30年未満","point":0.5},{"label":"20年～25年未満","point":0.6},{"label":"15年～20年未満","point":0.7},{"label":"10年～15年未満","point":0.8},{"label":"7年～10年未満","point":0.9},{"label":"3年～7年未満","point":1},{"label":"1年～3年未満","point":1.1},{"label":"1年未満","point":1.2}],"企業種別":[{"label":"プライム","point":3},{"label":"スタンダード","point":3.5},{"label":"グロース","point":4.5},{"label":"名証一部","point":3},{"label":"名証二部","point":3.5},{"label":"名証セントレックス","point":4.5},{"label":"札証アンビシャス","point":4.5},{"label":"福証(本則市場)","point":3.5},{"label":"福証Q-BOARD","point":4.5},{"label":"その他上場","point":4.5}],"自己資本比率":[{"label":"50％以上","point":0},{"label":"30～49％","point":0.2},{"label":"10～29％","point":0.4},{"label":"10％未満","point":0.6},{"label":"マイナス","point":0.8},{"label":"不明・データ無し","point":0.5}],"被保険者数":[{"label":"1000人以上","point":0},{"label":"700～1000人未満","point":0.1},{"label":"500～700人未満","point":0.2},{"label":"300～500人未満","point":0.3},{"label":"100～300人未満","point":0.4},{"label":"50～100人未満","point":0.6},{"label":"20～50人未満","point":0.8},{"label":"5～20人未満","point":1},{"label":"5人未満","point":1.5},{"label":"不明・データ無し","point":1}]},"会社以外":{"決算公告":[{"label":"公告あり","point":0},{"label":"公告なし","point":0.5}],"リスクスコア":[{"label":"99～100","point":0},{"label":"96～98","point":0.1},{"label":"90～95","point":0.2},{"label":"76～89","point":0.3},{"label":"50～75","point":0.4},{"label":"21～49","point":0.6},{"label":"11～20","point":0.8},{"label":"5～10","point":1},{"label":"2～4","point":1.2},{"label":"1","point":1.4},{"label":"不明・データ無し","point":1.4}],"倒産スコア":[{"label":"A","point":0},{"label":"B","point":0.1},{"label":"C","point":0.2},{"label":"D","point":0.3},{"label":"E","point":0.5},{"label":"F","point":0.7},{"label":"Gデータ無し","point":0.9},{"label":"不明・データ無し","point":0.8}],"決算":[{"label":"黒字","point":0},{"label":"赤字（1期のみ）","point":0.5},{"label":"赤字（2期連続）","point":1},{"label":"赤字（3期連続以上）","point":1.5},{"label":"不明・データ無し","point":1}],"企業評価":[{"label":"85～100点","point":0},{"label":"65～79点","point":0.3},{"label":"50～64点","point":0.6},{"label":"30～49点","point":0.9},{"label":"29点以下(不明)","point":1.2},{"label":"不明・データ無し","point":0.9}],"年商":[{"label":"100億以上","point":0},{"label":"95億～100億未満","point":0.05},{"label":"90億～95億未満","point":0.1},{"label":"85億～90億未満","point":0.15},{"label":"80億～85億未満","point":0.2},{"label":"75億～80億未満","point":0.25},{"label":"60億～75億未満","point":0.3},{"label":"55億～60億未満","point":0.35},{"label":"50億～55億未満","point":0.4},{"label":"45億～50億未満","point":0.45},{"label":"40億～45億未満","point":0.5},{"label":"35億～40億未満","point":0.55},{"label":"30億～35億未満","point":0.6},{"label":"25億～30億未満","point":0.65},{"label":"20億～25億未満","point":0.7},{"label":"15億～20億未満","point":0.75},{"label":"10億～15億未満","point":0.8},{"label":"10億未満","point":0.85},{"label":"不明・データ無し","point":0.5}],"資本金":[{"label":"100億以上","point":0},{"label":"50億～100億未満","point":0.05},{"label":"30億～50億未満","point":0.1},{"label":"10億～30億未満","point":0.15},{"label":"5億～10億未満","point":0.2},{"label":"3億～5億未満","point":0.25},{"label":"1億～3億未満","point":0.3},{"label":"5000万～1億未満","point":0.35},{"label":"3000万～5000万未満","point":0.4},{"label":"1000万～3000万未満","point":0.45},{"label":"1000万未満","point":0.5}],"業歴":[{"label":"50年以上","point":0},{"label":"45年～50年未満","point":0.1},{"label":"40年～45年未満","point":0.2},{"label":"35年～40年未満","point":0.3},{"label":"30年～35年未満","point":0.4},{"label":"25年～30年未満","point":0.5},{"label":"20年～25年未満","point":0.6},{"label":"15年～20年未満","point":0.7},{"label":"10年～15年未満","point":0.8},{"label":"7年～10年未満","point":0.9},{"label":"3年～7年未満","point":1},{"label":"1年～3年未満","point":1.1},{"label":"1年未満","point":1.2}],"企業種別":[{"label":"一般社団法人","point":5.5},{"label":"一般財団法人","point":5.5},{"label":"公益社団法人","point":5.5},{"label":"公益財団法人","point":5.5},{"label":"学校法人","point":5.5},{"label":"医療法人","point":5.5},{"label":"宗教法人","point":5.5},{"label":"社会福祉法人","point":5.5},{"label":"独立行政法人","point":4.5},{"label":"第三セクター","point":4.5},{"label":"農(漁)業組合","point":5.5},{"label":"その他の法人","point":5.5}],"自己資本比率":[{"label":"50％以上","point":0},{"label":"30～49％","point":0.2},{"label":"10～29％","point":0.4},{"label":"10％未満","point":0.6},{"label":"マイナス","point":0.8},{"label":"不明・データ無し","point":0.5}],"被保険者数":[{"label":"1000人以上","point":0},{"label":"700～1000人未満","point":0.1},{"label":"500～700人未満","point":0.2},{"label":"300～500人未満","point":0.3},{"label":"100～300人未満","point":0.4},{"label":"50～100人未満","point":0.6},{"label":"20～50人未満","point":0.8},{"label":"5～20人未満","point":1},{"label":"5人未満","point":1.5},{"label":"不明・データ無し","point":1}]},"国および地方公共団体":{"企業種別":[{"label":"国","point":2.5},{"label":"都道府県","point":2.5},{"label":"市区町村","point":3.5},{"label":"特別地方公共団体","point":3.5},{"label":"NHK","point":3.5},{"label":"国立大学","point":3.5},{"label":"国民健康保険団体連合会","point":3.5},{"label":"社会保険診療報酬支払基金","point":3.5},{"label":"その他の団体","point":3.5}]}},"defaults":{}};
 
-  function fetchRecords(query, fields) {
-    var params = new URLSearchParams({ app: CONFIG.APP_ID });
-    if (query) params.append('query', query);
-    if (fields) fields.forEach(function(f) { params.append('fields[0]', f); });
-    var url = BASE_URL + '?' + params.toString();
-    // fields の正しいエンコーディング
-    if (fields && fields.length) {
-      url = BASE_URL + '?app=' + CONFIG.APP_ID;
-      if (query) url += '&query=' + encodeURIComponent(query);
-      fields.forEach(function(f, i) { url += '&fields[' + i + ']=' + encodeURIComponent(f); });
-    }
-    return fetch(url, {
-      method: 'GET',
-      headers: { 'X-Cybozu-API-Token': CONFIG.API_TOKEN }
-    })
-    .then(function(resp) {
-      if (!resp.ok) throw new Error('API Error: ' + resp.status);
-      return resp.json();
-    })
-    .then(function(data) { return data.records || []; });
-  }
-
-  var f = CONFIG.FIELDS;
   var STEP = { CATEGORY: 0, TSR: 1, GENRE_START: 2 };
   var STEP_OTHER = CONFIG.GENRES.length + STEP.GENRE_START;
 
-  // キャッシュ
-  var cachedCategories = null;
-  var cachedOptions = {};
-  var cachedDefaults = {};
-
-  function fetchCategories() {
-    if (cachedCategories) return Promise.resolve(cachedCategories);
-    return fetchRecords(
-      f.DELETE + ' not in ("削除") order by ' + f.CATEGORY + ' asc',
-      [f.CATEGORY]
-    ).then(function(records) {
-      var seen = {};
-      var unique = [];
-      records.forEach(function(r) {
-        var v = r[f.CATEGORY].value;
-        if (!seen[v]) { seen[v] = true; unique.push(v); }
-      });
-      cachedCategories = unique;
-      return unique;
-    });
-  }
-
-  function fetchOptions(category) {
-    if (cachedOptions[category]) return Promise.resolve(cachedOptions[category]);
-    var genreList = CONFIG.GENRES.map(function(g) { return '"' + g + '"'; }).join(',');
-    return fetchRecords(
-      f.CATEGORY + ' in ("' + category + '") and ' + f.GENRE + ' in (' + genreList + ') and ' + f.DELETE + ' not in ("削除") order by ' + f.SORT + ' asc',
-      [f.ITEM, f.GENRE, f.POINT]
-    ).then(function(records) {
-      var optsByGenre = {};
-      CONFIG.GENRES.forEach(function(g) { optsByGenre[g] = []; });
-      records.forEach(function(rec) {
-        var genre = rec[f.GENRE].value;
-        if (optsByGenre[genre]) {
-          optsByGenre[genre].push({
-            label: rec[f.ITEM].value,
-            point: Number(rec[f.POINT].value) || 0
-          });
-        }
-      });
-      cachedOptions[category] = optsByGenre;
-      return optsByGenre;
-    });
-  }
-
-  function fetchDefaults(category) {
-    if (cachedDefaults[category]) return Promise.resolve(cachedDefaults[category]);
-    var genreList = CONFIG.GENRES.map(function(g) { return '"' + g + '"'; }).join(',');
-    return fetchRecords(
-      f.CATEGORY + ' in ("' + category + '") and ' + f.GENRE + ' in (' + genreList + ') and ' + f.ESTIMATE_USE + ' in ("見積使用") and ' + f.DELETE + ' not in ("削除")',
-      [f.ITEM, f.POINT, f.GENRE]
-    ).then(function(records) {
-      var defaults = {};
-      records.forEach(function(rec) {
-        var genre = rec[f.GENRE].value;
-        if (!defaults[genre]) {
-          defaults[genre] = { item: rec[f.ITEM].value, point: Number(rec[f.POINT].value) || 0 };
-        }
-      });
-      cachedDefaults[category] = defaults;
-      return defaults;
-    });
-  }
-
+  // データ取得（埋め込みデータから即座に返す）
+  function fetchCategories() { return Promise.resolve(MASTER_DATA.categories); }
+  function fetchOptions(category) { return Promise.resolve(MASTER_DATA.options[category] || {}); }
+  function fetchDefaults(category) { return Promise.resolve(MASTER_DATA.defaults[category] || {}); }
   function esc(s) {
     var d = document.createElement('div');
     d.textContent = s;
