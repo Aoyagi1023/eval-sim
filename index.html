@@ -1,0 +1,637 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>評価シミュレーション</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    background: #f1f5f9; display: flex; align-items: center; justify-content: center;
+    min-height: 100vh;
+  }
+  .es-modal {
+    background: #fff; border-radius: 12px;
+    width: 950px; height: 85vh;
+    display: flex; flex-direction: column;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.08), 0 8px 24px rgba(0,0,0,0.12), 0 24px 48px rgba(0,0,0,0.08);
+  }
+  .es-header {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 18px 24px; flex-shrink: 0;
+    background-image: linear-gradient(to right, #2563eb, #60a5fa);
+    background-size: 100% 3px; background-position: bottom; background-repeat: no-repeat;
+  }
+  .es-header-title { font-size: 20px; font-weight: 700; color: #1e293b; }
+  .es-body { display: flex; flex: 1; min-height: 0; overflow: hidden; }
+  .es-sidebar {
+    width: 230px; min-width: 230px; background: #f8fafc;
+    border-right: 1px solid #e2e8f0; overflow-y: auto;
+    padding: 4px 0; flex-shrink: 0;
+  }
+  .es-sidebar::-webkit-scrollbar { width: 4px; }
+  .es-sidebar::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 2px; }
+  .es-sidebar-item {
+    display: flex; align-items: center; gap: 8px;
+    padding: 2px 12px; cursor: pointer; font-size: 13px;
+    transition: all 0.15s ease; border-left: 3px solid transparent; user-select: none;
+    min-height: 38px;
+  }
+  .es-sidebar-item:hover { background: #f1f5f9; }
+  .es-sidebar-item.es-active { background: #eff6ff; border-left-color: #2563eb; }
+  .es-sidebar-item.es-disabled { opacity: 0.4; cursor: default; }
+  .es-sidebar-item.es-disabled:hover { background: transparent; }
+  .es-sidebar-icon { font-size: 14px; width: 16px; text-align: center; flex-shrink: 0; color: #94a3b8; }
+  .es-sidebar-item.es-active .es-sidebar-icon { color: #2563eb; }
+  .es-sidebar-icon.es-completed { color: #059669; }
+  .es-sidebar-label {
+    font-size: 13px; font-weight: 600; color: #334155;
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  }
+  .es-sidebar-value {
+    font-size: 12px; color: #64748b;
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  }
+  .es-sidebar-point { font-size: 11px; font-weight: 700; color: #059669; white-space: nowrap; flex-shrink: 0; }
+  .es-sidebar-sep { height: 1px; background: #e2e8f0; margin: 2px 12px; }
+  .es-content { flex: 1; overflow-y: auto; padding: 20px 24px; }
+  .es-content::-webkit-scrollbar { width: 6px; }
+  .es-content::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 3px; }
+  .es-content::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+  .es-heading {
+    font-size: 17px; font-weight: 700; color: #334155;
+    margin: 0 0 16px 0; padding-left: 10px; border-left: 3px solid #2563eb; line-height: 1.2;
+  }
+  .es-radio-group { display: flex; flex-direction: column; gap: 10px; }
+  .es-radio-item {
+    display: flex; align-items: center;
+    padding: 8px 14px; border: 1.5px solid #e2e8f0; border-radius: 8px;
+    cursor: pointer; transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    background: #fff; user-select: none;
+  }
+  .es-radio-item:hover {
+    border-color: #93c5fd; background: #eff6ff;
+    transform: translateY(-1px); box-shadow: 0 2px 8px rgba(37,99,235,0.1);
+  }
+  .es-radio-item.es-selected {
+    border-color: #2563eb; background: #eff6ff;
+    box-shadow: 0 0 0 1px #2563eb, 0 2px 8px rgba(37,99,235,0.12);
+  }
+  .es-radio-item input[type="radio"] {
+    appearance: none; -webkit-appearance: none;
+    width: 18px; height: 18px; border: 2px solid #cbd5e1; border-radius: 50%;
+    margin: 0 8px 0 0; position: relative; flex-shrink: 0;
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+  .es-radio-item input[type="radio"]:checked { border-color: #2563eb; background: #2563eb; }
+  .es-radio-item input[type="radio"]:checked::after {
+    content: ''; position: absolute; top: 50%; left: 50%;
+    transform: translate(-50%, -50%); width: 7px; height: 7px;
+    background: #fff; border-radius: 50%;
+  }
+  .es-radio-label { font-size: 15px; color: #334155; flex: 1; }
+  .es-radio-point {
+    font-size: 13px; font-weight: 700; color: #059669;
+    background: #ecfdf5; padding: 1px 7px; border-radius: 99px; margin-left: 8px;
+  }
+  .es-no-options { font-size: 15px; color: #94a3b8; padding: 8px 0; }
+  .es-input-group { margin-bottom: 14px; }
+  .es-input-group:last-child { margin-bottom: 0; }
+  .es-input-label { display: block; font-size: 15px; font-weight: 600; color: #334155; margin-bottom: 6px; }
+  .es-input {
+    width: 100%; padding: 9px 12px; border: 1.5px solid #e2e8f0; border-radius: 8px;
+    font-size: 15px; outline: none; box-sizing: border-box; transition: border-color 0.2s;
+  }
+  .es-input:focus { border-color: #2563eb; }
+  .es-footer {
+    display: flex; align-items: center; gap: 20px;
+    padding: 14px 24px; border-top: 1px solid #e2e8f0; flex-shrink: 0;
+    background: #fafbfc; border-radius: 0 0 12px 12px;
+  }
+  .es-preview { font-size: 16px; color: #475569; white-space: nowrap; }
+  .es-preview-value {
+    font-weight: 700; color: #1e293b; font-size: 20px;
+    background: linear-gradient(135deg, #eff6ff, #dbeafe);
+    padding: 4px 14px; border-radius: 8px; border: 1px solid #bfdbfe;
+    display: inline-block; margin-left: 4px;
+  }
+  .es-footer-calc { display: flex; align-items: center; gap: 12px; flex: 1; justify-content: flex-end; }
+  .es-footer-field {
+    display: flex; align-items: center; gap: 4px; white-space: nowrap; font-size: 13px; color: #475569;
+  }
+  .es-footer-field input {
+    width: 120px; padding: 5px 8px; border: 1.5px solid #e2e8f0; border-radius: 6px;
+    font-size: 14px; text-align: right; outline: none; box-sizing: border-box;
+    transition: border-color 0.2s;
+  }
+  .es-footer-field input:focus { border-color: #2563eb; }
+  .es-footer-field input[readonly] { background: #f8fafc; color: #64748b; cursor: default; }
+  .es-footer-field .es-unit { font-size: 12px; color: #94a3b8; }
+  .es-error { color: #ef4444; font-size: 15px; padding: 20px; }
+</style>
+</head>
+<body>
+<div class="es-modal">
+  <div class="es-header">
+    <span class="es-header-title">評価シミュレーション</span>
+  </div>
+  <div class="es-body">
+    <div class="es-sidebar" id="es-sidebar"></div>
+    <div class="es-content" id="es-content">
+      <div style="color:#94a3b8;">読み込み中...</div>
+    </div>
+  </div>
+  <div class="es-footer">
+    <div class="es-preview">総合評価: <span class="es-preview-value" id="es-preview">-</span></div>
+    <div class="es-footer-calc">
+      <div class="es-footer-field">
+        <span>買取金額</span>
+        <input type="text" inputmode="numeric" id="es-buy-input" placeholder="0">
+        <span class="es-unit">円</span>
+      </div>
+      <div class="es-footer-field">
+        <span>売買差益</span>
+        <input type="text" id="es-calc-profit" value="-" readonly tabindex="-1">
+        <span class="es-unit">円</span>
+      </div>
+      <div class="es-footer-field">
+        <span>支払金額</span>
+        <input type="text" id="es-calc-pay" value="-" readonly tabindex="-1">
+        <span class="es-unit">円</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+(function() {
+  'use strict';
+
+  var CONFIG = {
+    SUBDOMAIN: 'risk-research',
+    APP_ID: 317,
+    API_TOKEN: 'QZE08F8dv7jXgdSCibZoC1vvItP5olZwnzRput26',
+    FIELDS: {
+      CATEGORY: '大分類',
+      GENRE: '小分類',
+      ITEM: '項目',
+      POINT: '加点',
+      SORT: '表示順位',
+      ESTIMATE_USE: '見積使用',
+      DELETE: '削除'
+    },
+    GENRES: ['企業種別', '業歴', '資本金', '被保険者数', '決算公告', '年商', '企業評価', '決算', '自己資本比率', 'リスクスコア', '倒産スコア'],
+    TSR_OPTIONS: ['会社財務情報あり', '財務情報なし', '会社情報なし', '見積']
+  };
+
+  var BASE_URL = 'https://' + CONFIG.SUBDOMAIN + '.cybozu.com/k/v1/records.json';
+
+  function fetchRecords(query, fields) {
+    var params = new URLSearchParams({ app: CONFIG.APP_ID });
+    if (query) params.append('query', query);
+    if (fields) fields.forEach(function(f) { params.append('fields[0]', f); });
+    var url = BASE_URL + '?' + params.toString();
+    // fields の正しいエンコーディング
+    if (fields && fields.length) {
+      url = BASE_URL + '?app=' + CONFIG.APP_ID;
+      if (query) url += '&query=' + encodeURIComponent(query);
+      fields.forEach(function(f, i) { url += '&fields[' + i + ']=' + encodeURIComponent(f); });
+    }
+    return fetch(url, {
+      method: 'GET',
+      headers: { 'X-Cybozu-API-Token': CONFIG.API_TOKEN }
+    })
+    .then(function(resp) {
+      if (!resp.ok) throw new Error('API Error: ' + resp.status);
+      return resp.json();
+    })
+    .then(function(data) { return data.records || []; });
+  }
+
+  var f = CONFIG.FIELDS;
+  var STEP = { CATEGORY: 0, TSR: 1, GENRE_START: 2 };
+  var STEP_OTHER = CONFIG.GENRES.length + STEP.GENRE_START;
+
+  // キャッシュ
+  var cachedCategories = null;
+  var cachedOptions = {};
+  var cachedDefaults = {};
+
+  function fetchCategories() {
+    if (cachedCategories) return Promise.resolve(cachedCategories);
+    return fetchRecords(
+      f.DELETE + ' not in ("削除") order by ' + f.CATEGORY + ' asc',
+      [f.CATEGORY]
+    ).then(function(records) {
+      var seen = {};
+      var unique = [];
+      records.forEach(function(r) {
+        var v = r[f.CATEGORY].value;
+        if (!seen[v]) { seen[v] = true; unique.push(v); }
+      });
+      cachedCategories = unique;
+      return unique;
+    });
+  }
+
+  function fetchOptions(category) {
+    if (cachedOptions[category]) return Promise.resolve(cachedOptions[category]);
+    var genreList = CONFIG.GENRES.map(function(g) { return '"' + g + '"'; }).join(',');
+    return fetchRecords(
+      f.CATEGORY + ' in ("' + category + '") and ' + f.GENRE + ' in (' + genreList + ') and ' + f.DELETE + ' not in ("削除") order by ' + f.SORT + ' asc',
+      [f.ITEM, f.GENRE, f.POINT]
+    ).then(function(records) {
+      var optsByGenre = {};
+      CONFIG.GENRES.forEach(function(g) { optsByGenre[g] = []; });
+      records.forEach(function(rec) {
+        var genre = rec[f.GENRE].value;
+        if (optsByGenre[genre]) {
+          optsByGenre[genre].push({
+            label: rec[f.ITEM].value,
+            point: Number(rec[f.POINT].value) || 0
+          });
+        }
+      });
+      cachedOptions[category] = optsByGenre;
+      return optsByGenre;
+    });
+  }
+
+  function fetchDefaults(category) {
+    if (cachedDefaults[category]) return Promise.resolve(cachedDefaults[category]);
+    var genreList = CONFIG.GENRES.map(function(g) { return '"' + g + '"'; }).join(',');
+    return fetchRecords(
+      f.CATEGORY + ' in ("' + category + '") and ' + f.GENRE + ' in (' + genreList + ') and ' + f.ESTIMATE_USE + ' in ("見積使用") and ' + f.DELETE + ' not in ("削除")',
+      [f.ITEM, f.POINT, f.GENRE]
+    ).then(function(records) {
+      var defaults = {};
+      records.forEach(function(rec) {
+        var genre = rec[f.GENRE].value;
+        if (!defaults[genre]) {
+          defaults[genre] = { item: rec[f.ITEM].value, point: Number(rec[f.POINT].value) || 0 };
+        }
+      });
+      cachedDefaults[category] = defaults;
+      return defaults;
+    });
+  }
+
+  function esc(s) {
+    var d = document.createElement('div');
+    d.textContent = s;
+    return d.innerHTML;
+  }
+
+  function getTsrAddpoint(category, tsr) {
+    if (!category || !tsr) return 0;
+    var addpoint = 0;
+    if (category === '非上場' || category === '会社以外') {
+      if (tsr === '会社情報なし') addpoint = 1.5;
+      else if (tsr === '財務情報なし') addpoint = 0.5;
+    }
+    if (category === '非上場' || category === '会社以外' || category === '上場') {
+      if (tsr === '見積') addpoint = 0.5;
+    }
+    return addpoint;
+  }
+
+  function calcTotal(selections, otherPoint) {
+    var total = CONFIG.GENRES.reduce(function(sum, genre) {
+      var sel = selections[genre];
+      return sum + (sel ? sel.point : 0);
+    }, 0) + (otherPoint || 0);
+    return total > 0 ? Number(total.toFixed(1)) : null;
+  }
+
+  function formatCurrency(n) {
+    if (n == null) return '-';
+    return n.toLocaleString('ja-JP');
+  }
+
+  // State
+  var state = {
+    categories: [],
+    optionsByGenre: {},
+    selectedCategory: null,
+    tsrValue: null,
+    selections: {},
+    otherText: '',
+    otherPoint: 0,
+    buyAmount: 0,
+    activeStep: STEP.CATEGORY
+  };
+  CONFIG.GENRES.forEach(function(g) { state.selections[g] = null; });
+
+  var sidebarEl = document.getElementById('es-sidebar');
+  var contentEl = document.getElementById('es-content');
+  var previewEl = document.getElementById('es-preview');
+  var buyInput = document.getElementById('es-buy-input');
+  var profitEl = document.getElementById('es-calc-profit');
+  var payEl = document.getElementById('es-calc-pay');
+  var autoAdvanceTimer = null;
+
+  // 買取金額入力
+  buyInput.addEventListener('input', function() {
+    state.buyAmount = parseInt(buyInput.value.replace(/[^0-9]/g, ''), 10) || 0;
+    updatePreview();
+  });
+  buyInput.addEventListener('focus', function() {
+    buyInput.value = state.buyAmount || '';
+  });
+  buyInput.addEventListener('blur', function() {
+    buyInput.value = state.buyAmount ? state.buyAmount.toLocaleString('ja-JP') : '';
+  });
+
+  function updatePreview() {
+    var total = calcTotal(state.selections, state.otherPoint);
+    previewEl.textContent = total != null ? total : '-';
+    var buy = state.buyAmount || 0;
+    if (buy > 0 && total > 0) {
+      var profit = Math.ceil(buy * (total / 100) / 100) * 100;
+      var pay = buy - profit;
+      profitEl.value = formatCurrency(profit);
+      payEl.value = formatCurrency(pay);
+    } else {
+      profitEl.value = '-';
+      payEl.value = '-';
+    }
+  }
+
+  function renderSidebar() {
+    var hasCat = !!state.selectedCategory;
+    var html = '';
+
+    function buildItem(step, label, value, completed, disabled, point) {
+      var active = state.activeStep === step;
+      var cls = 'es-sidebar-item';
+      if (active) cls += ' es-active';
+      if (disabled) cls += ' es-disabled';
+      var iconCls = completed ? 'es-sidebar-icon es-completed' : 'es-sidebar-icon';
+      var icon = completed ? '&#10003;' : (active ? '&#9679;' : '&#9675;');
+      var valueHtml = '';
+      if (value) {
+        valueHtml = '<span class="es-sidebar-value">' + esc(value) + '</span>';
+        if (point != null) {
+          var fp = point > 0 ? '+' + point : '' + point;
+          valueHtml += '<span class="es-sidebar-point">' + fp + '</span>';
+        }
+      }
+      return '<div class="' + cls + '" data-step="' + step + '">' +
+        '<span class="' + iconCls + '">' + icon + '</span>' +
+        '<div style="overflow:hidden;">' +
+          '<div class="es-sidebar-label">' + esc(label) + '</div>' +
+          '<div style="display:flex;align-items:center;gap:2px;min-height:16px;">' + valueHtml + '</div>' +
+        '</div></div>';
+    }
+
+    html += buildItem(STEP.CATEGORY, '評価区分', state.selectedCategory, hasCat, false);
+    html += buildItem(STEP.TSR, 'TSR情報', state.tsrValue, !!state.tsrValue, false);
+    html += '<div class="es-sidebar-sep"></div>';
+    CONFIG.GENRES.forEach(function(genre, i) {
+      var step = STEP.GENRE_START + i;
+      var sel = state.selections[genre];
+      html += buildItem(step, genre, sel ? sel.label : null, !!sel, !hasCat, sel ? sel.point : null);
+    });
+    html += '<div class="es-sidebar-sep"></div>';
+    var fmtPt = function(v) { return v > 0 ? '+' + v : '' + v; };
+    var otherDone = !!(state.otherText || state.otherPoint);
+    var otherVal = state.otherText
+      ? (state.otherPoint ? state.otherText + ' (' + fmtPt(state.otherPoint) + ')' : state.otherText)
+      : (state.otherPoint ? fmtPt(state.otherPoint) : null);
+    html += buildItem(STEP_OTHER, 'その他', otherVal, otherDone, !hasCat);
+
+    sidebarEl.innerHTML = html;
+    sidebarEl.querySelectorAll('.es-sidebar-item:not(.es-disabled)').forEach(function(item) {
+      item.addEventListener('click', function() { navigateTo(parseInt(item.dataset.step, 10)); });
+    });
+  }
+
+  function navigateTo(step) {
+    state.activeStep = step;
+    renderSidebar();
+    renderContent();
+  }
+
+  function scheduleAutoAdvance() {
+    if (autoAdvanceTimer) clearTimeout(autoAdvanceTimer);
+    if (state.activeStep >= STEP_OTHER) return;
+    autoAdvanceTimer = setTimeout(function() {
+      autoAdvanceTimer = null;
+      navigateTo(state.activeStep + 1);
+    }, 400);
+  }
+
+  function resetAllSelections() {
+    CONFIG.GENRES.forEach(function(g) { state.selections[g] = null; });
+    state.otherText = '';
+    state.otherPoint = 0;
+  }
+
+  function autoSelectSingleOptions() {
+    CONFIG.GENRES.forEach(function(genre) {
+      if (state.selections[genre]) return;
+      var opts = state.optionsByGenre[genre] || [];
+      if (opts.length !== 1) return;
+      var point = opts[0].point;
+      if (genre === '企業種別') point += getTsrAddpoint(state.selectedCategory, state.tsrValue);
+      state.selections[genre] = { label: opts[0].label, point: point };
+    });
+  }
+
+  function recalcKindsPoint() {
+    var sel = state.selections['企業種別'];
+    if (!sel) return;
+    var opts = state.optionsByGenre['企業種別'] || [];
+    var matched = opts.find(function(o) { return o.label === sel.label; });
+    if (matched) {
+      sel.point = matched.point + getTsrAddpoint(state.selectedCategory, state.tsrValue);
+    }
+  }
+
+  function renderContent() {
+    var step = state.activeStep;
+    if (step === STEP.CATEGORY) renderCategoryStep();
+    else if (step === STEP.TSR) renderTsrStep();
+    else if (step === STEP_OTHER) renderOtherStep();
+    else {
+      var genre = CONFIG.GENRES[step - STEP.GENRE_START];
+      if (genre) renderGenreStep(genre);
+    }
+  }
+
+  function renderCategoryStep() {
+    var cats = state.categories;
+    var html = '<h3 class="es-heading">評価区分</h3>';
+    if (cats.length === 0) { contentEl.innerHTML = html + '<div class="es-no-options">選択肢がありません</div>'; return; }
+    html += '<div class="es-radio-group">';
+    cats.forEach(function(cat) {
+      var sel = state.selectedCategory === cat ? ' es-selected' : '';
+      html += '<label class="es-radio-item' + sel + '">' +
+        '<input type="radio" name="es-category" value="' + esc(cat) + '" ' + (state.selectedCategory === cat ? 'checked' : '') + '>' +
+        '<span class="es-radio-label">' + esc(cat) + '</span></label>';
+    });
+    html += '</div>';
+    contentEl.innerHTML = html;
+    contentEl.querySelectorAll('input[name="es-category"]').forEach(function(radio) {
+      radio.closest('.es-radio-item').addEventListener('click', function() {
+        radio.checked = true;
+        onCategorySelect(radio.value);
+      });
+    });
+  }
+
+  function renderTsrStep() {
+    var html = '<h3 class="es-heading">TSR情報</h3><div class="es-radio-group">';
+    CONFIG.TSR_OPTIONS.forEach(function(opt) {
+      var sel = state.tsrValue === opt ? ' es-selected' : '';
+      html += '<label class="es-radio-item' + sel + '">' +
+        '<input type="radio" name="es-tsr" value="' + esc(opt) + '" ' + (state.tsrValue === opt ? 'checked' : '') + '>' +
+        '<span class="es-radio-label">' + esc(opt) + '</span></label>';
+    });
+    html += '</div>';
+    contentEl.innerHTML = html;
+    contentEl.querySelectorAll('input[name="es-tsr"]').forEach(function(radio) {
+      radio.closest('.es-radio-item').addEventListener('click', function() {
+        radio.checked = true;
+        onTsrSelect(radio.value);
+      });
+    });
+  }
+
+  function renderGenreStep(genre) {
+    var options = state.optionsByGenre[genre] || [];
+    var sel = state.selections[genre];
+    var addpoint = genre === '企業種別' ? getTsrAddpoint(state.selectedCategory, state.tsrValue) : 0;
+    var html = '<h3 class="es-heading">' + esc(genre) + '</h3>';
+    if (options.length === 0) { contentEl.innerHTML = html + '<div class="es-no-options">選択肢がありません</div>'; return; }
+    html += '<div class="es-radio-group">';
+    options.forEach(function(opt) {
+      var adjustedPt = opt.point + addpoint;
+      var isSel = sel && sel.label === opt.label ? ' es-selected' : '';
+      var fmtPt = adjustedPt > 0 ? '+' + adjustedPt : '' + adjustedPt;
+      html += '<label class="es-radio-item' + isSel + '">' +
+        '<input type="radio" name="es-genre" value="' + esc(opt.label) + '" ' + (sel && sel.label === opt.label ? 'checked' : '') + '>' +
+        '<span class="es-radio-label">' + esc(opt.label) + '</span>' +
+        '<span class="es-radio-point">' + fmtPt + '</span></label>';
+    });
+    html += '</div>';
+    contentEl.innerHTML = html;
+    contentEl.querySelectorAll('input[name="es-genre"]').forEach(function(radio) {
+      radio.closest('.es-radio-item').addEventListener('click', function() {
+        radio.checked = true;
+        var matched = options.find(function(o) { return o.label === radio.value; });
+        if (matched) {
+          state.selections[genre] = { label: matched.label, point: matched.point + addpoint };
+          contentEl.querySelectorAll('.es-radio-item').forEach(function(el) { el.classList.remove('es-selected'); });
+          radio.closest('.es-radio-item').classList.add('es-selected');
+          updatePreview();
+          renderSidebar();
+          scheduleAutoAdvance();
+        }
+      });
+    });
+  }
+
+  function renderOtherStep() {
+    contentEl.innerHTML =
+      '<h3 class="es-heading">その他</h3>' +
+      '<div class="es-input-group">' +
+        '<label class="es-input-label">その他</label>' +
+        '<input type="text" class="es-input" id="es-other-text" value="' + esc(state.otherText) + '" placeholder="項目名を入力">' +
+      '</div>' +
+      '<div class="es-input-group">' +
+        '<label class="es-input-label">その他加点</label>' +
+        '<input type="number" class="es-input" id="es-other-point" value="' + (state.otherPoint || '') + '" placeholder="加点を入力" step="0.1">' +
+      '</div>';
+    document.getElementById('es-other-text').addEventListener('input', function(e) {
+      state.otherText = e.target.value;
+      renderSidebar();
+    });
+    document.getElementById('es-other-point').addEventListener('input', function(e) {
+      state.otherPoint = Number(e.target.value) || 0;
+      updatePreview();
+      renderSidebar();
+    });
+  }
+
+  function onCategorySelect(category) {
+    if (state.selectedCategory === category) { scheduleAutoAdvance(); return; }
+    state.selectedCategory = category;
+    resetAllSelections();
+    renderSidebar();
+    updatePreview();
+    fetchOptions(category).then(function(optsByGenre) {
+      state.optionsByGenre = optsByGenre;
+      if (state.tsrValue === '見積') {
+        return fetchDefaults(category).then(function(defaults) {
+          CONFIG.GENRES.forEach(function(genre) {
+            if (!defaults[genre]) return;
+            var opts = state.optionsByGenre[genre] || [];
+            var matched = opts.find(function(o) { return o.label === defaults[genre].item; });
+            if (matched) {
+              var point = matched.point;
+              if (genre === '企業種別') point += getTsrAddpoint(category, state.tsrValue);
+              state.selections[genre] = { label: matched.label, point: point };
+            }
+          });
+          autoSelectSingleOptions();
+        });
+      } else if (state.tsrValue) {
+        autoSelectSingleOptions();
+      }
+    }).then(function() {
+      renderSidebar();
+      updatePreview();
+      scheduleAutoAdvance();
+    }).catch(function(err) {
+      console.error('評価オプション取得エラー:', err);
+      contentEl.innerHTML = '<div class="es-error">データの取得に失敗しました。APIトークンまたはネットワーク接続を確認してください。</div>';
+    });
+  }
+
+  function onTsrSelect(tsr) {
+    if (state.tsrValue === tsr) { scheduleAutoAdvance(); return; }
+    state.tsrValue = tsr;
+    var p = Promise.resolve();
+    if (tsr === '見積') {
+      resetAllSelections();
+      if (state.selectedCategory) {
+        p = fetchDefaults(state.selectedCategory).then(function(defaults) {
+          CONFIG.GENRES.forEach(function(genre) {
+            if (!defaults[genre]) return;
+            var opts = state.optionsByGenre[genre] || [];
+            var matched = opts.find(function(o) { return o.label === defaults[genre].item; });
+            if (matched) {
+              var point = matched.point;
+              if (genre === '企業種別') point += getTsrAddpoint(state.selectedCategory, tsr);
+              state.selections[genre] = { label: matched.label, point: point };
+            }
+          });
+        }).catch(function(err) { console.error('デフォルト値適用エラー:', err); });
+      }
+    } else {
+      recalcKindsPoint();
+    }
+    p.then(function() {
+      autoSelectSingleOptions();
+      renderSidebar();
+      updatePreview();
+      scheduleAutoAdvance();
+    });
+  }
+
+  // Init
+  fetchCategories().then(function(cats) {
+    state.categories = cats;
+    renderSidebar();
+    renderContent();
+  }).catch(function(err) {
+    console.error('評価データ初期化エラー:', err);
+    contentEl.innerHTML = '<div class="es-error">評価データの読み込みに失敗しました。<br>APIトークンまたはネットワーク接続を確認してください。</div>';
+  });
+
+})();
+</script>
+</body>
+</html>
