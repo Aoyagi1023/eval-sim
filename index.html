@@ -137,54 +137,68 @@
   @media (max-width: 768px) {
     body { align-items: stretch; padding: 0; }
     .es-modal {
-      width: 100%; height: 100vh; border-radius: 0;
+      width: 100%; height: 100dvh; border-radius: 0;
       box-shadow: none;
     }
-    .es-header { padding: 12px 16px; }
-    .es-header-title { font-size: 16px; }
-    .es-body { flex-direction: column; }
+    .es-header { padding: 8px 12px; }
+    .es-header-title { font-size: 15px; }
+
+    /* サイドバー: 左端に縦並び（コンパクト） */
+    .es-body { flex-direction: row; }
     .es-sidebar {
-      width: 100%; min-width: 0; border-right: none;
-      border-bottom: 1px solid #e2e8f0;
-      display: flex; overflow-x: auto; overflow-y: hidden;
-      padding: 0; flex-shrink: 0;
+      width: 54px; min-width: 54px;
+      border-right: 1px solid #e2e8f0; border-bottom: none;
+      overflow-y: auto; overflow-x: hidden;
+      padding: 2px 0; flex-shrink: 0;
       -webkit-overflow-scrolling: touch;
     }
     .es-sidebar-item {
-      flex-shrink: 0; min-height: 0;
-      padding: 6px 10px; border-left: none;
-      border-bottom: 3px solid transparent;
-      flex-direction: column; gap: 1px;
-      min-width: 60px; text-align: center;
-      font-size: 11px;
+      flex-direction: column; gap: 0;
+      padding: 4px 2px; min-height: 0;
+      text-align: center; border-left: 3px solid transparent;
     }
     .es-sidebar-item.es-active {
-      border-left-color: transparent;
-      border-bottom-color: #2563eb;
-      background: #eff6ff;
+      border-left-color: #2563eb; background: #eff6ff;
     }
     .es-sidebar-icon { display: none; }
-    .es-sidebar-label { font-size: 11px; white-space: nowrap; }
-    .es-sidebar-value { font-size: 10px; }
-    .es-sidebar-point { font-size: 10px; }
+    .es-sidebar-label { font-size: 9px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 48px; }
+    .es-sidebar-value { font-size: 8px; max-width: 48px; overflow: hidden; text-overflow: ellipsis; }
+    .es-sidebar-point { font-size: 8px; }
     .es-sidebar-sep { display: none; }
-    .es-content { padding: 16px; }
-    .es-heading { font-size: 15px; margin-bottom: 12px; }
-    .es-radio-group { gap: 8px; }
-    .es-radio-item { padding: 10px 12px; }
+
+    /* コンテンツ */
+    .es-content { padding: 12px; flex: 1; min-width: 0; }
+    .es-heading { font-size: 15px; margin-bottom: 10px; }
+    .es-radio-group { gap: 6px; }
+    .es-radio-item { padding: 8px 10px; }
     .es-radio-item:hover { transform: none; }
-    .es-radio-label { font-size: 14px; }
+    .es-radio-label { font-size: 13px; }
+    .es-radio-point { font-size: 12px; }
+
+    /* フッター: 固定表示・コンパクト */
     .es-footer {
-      flex-direction: column; gap: 8px;
-      padding: 10px 16px;
+      flex-direction: column; gap: 4px;
+      padding: 6px 12px;
+      position: sticky; bottom: 0;
+      border-top: 2px solid #2563eb;
+      background: #fff;
+      z-index: 10;
     }
-    .es-preview { font-size: 15px; }
-    .es-preview-value { font-size: 18px; }
+    .es-preview { font-size: 13px; text-align: center; }
+    .es-preview-value { font-size: 16px; padding: 2px 10px; }
     .es-footer-calc {
-      flex-wrap: wrap; justify-content: center; gap: 8px;
+      display: grid; grid-template-columns: repeat(3, 1fr); gap: 4px;
+      width: 100%;
     }
-    .es-footer-field { font-size: 12px; }
-    .es-footer-field input { width: 90px; font-size: 13px; padding: 4px 6px; }
+    .es-footer-field {
+      flex-direction: column; align-items: center; gap: 1px;
+      font-size: 10px;
+    }
+    .es-footer-field input {
+      width: 100%; font-size: 13px; padding: 4px 6px;
+      text-align: center;
+    }
+    .es-footer-field .es-unit { display: none; }
   }
 </style>
 </head>
